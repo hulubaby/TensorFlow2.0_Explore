@@ -19,6 +19,9 @@ assert tools.set_gpu_memory_growth()
 # 使用keras模型子类化API构建模型
 class MyModel(Model):
     def __init__(self):
+        """
+        初始化
+        """
         super(MyModel, self).__init__()
         self.conv1 = Conv2D(32, 3, activation='relu')
         self.flatten = Flatten()
@@ -119,10 +122,6 @@ class MyModel(Model):
         plt.legend()  # 子图说明
         plt.savefig('mnist_advanced.svg')
         plt.show()
-
-    def my_predict(self, imgs):
-        result = self.calc(imgs)
-        return tf.argmax(result, axis=1)
 
 
 def get_img(img_path):
