@@ -6,6 +6,8 @@
 __author__ = "huluwa@2020-03-05"
 
 import tools
+import os
+import datetime
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -84,13 +86,29 @@ def test_model(model):
     print(np.argmax(predictions[0]), test_labels[0])
 
 
+def lr_schedule(epoch):
+    """
+    根据epoch来调整学习率
+    :param epoch:
+    :return:
+    """
+    learning_rate = 0.02
+    if epoch > 5:
+        learning_rate = 0.01
+
+    return learning_rate
+
+
 """
 主逻辑
 """
 assert tools.set_gpu_memory_growth()
 
 CHECKPOINT_PATH = 'fashion_mnist_train/cp-{epoch:02d}.h5'
-# CHECKPOINT_DIR = os.path.dirname(CHECKPOINT_PATH)
+CHECKPOINT_DIR = os.path.dirname(CHECKPOINT_PATH)
+
+if os.path.isdir(CHECKPOINT_DIR) is not True:
+    os.mkdir(os.path.dirname(CHECKPOINT_PATH))
 
 # 加载数据
 (train_images, train_labels), (test_images, test_labels) = creat_dataset()
@@ -110,13 +128,24 @@ save_model_callback = tf.keras.callbacks.ModelCheckpoint(filepath=CHECKPOINT_PAT
                                                          # save_best_only=True,  # 只有准确率比上一次高时才会保存
                                                          save_freq=1,
                                                          verbose=0)
+
+# 创建学习率调整回调
+lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
+
+# 创建tensorboard回调
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y\%m\%d-%H:%M:%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
+                                                      histogram_freq=1)
+
 # 训练模型
 model.fit(train_images,
           train_labels,
           epochs=10,
           validation_split=0.2,  # 20%的训练集作为验证集使用
           validation_freq=1,
-          callbacks=[save_model_callback])
+          callbacks=[save_model_callback,
+                     tensorboard_callback,
+                     lr_callback])
 
 # 保存整个模型
 model.save('my_model.h5')
